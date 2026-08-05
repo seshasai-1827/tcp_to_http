@@ -1,41 +1,14 @@
 #include<stdio.h>
 #include<unistd.h>
-#include <sys/types.h>          /* See NOTES */
+#include <sys/types.h>    
 #include <sys/socket.h>
 #include<stdlib.h>
 #include <netinet/in.h>
 #include <netinet/ip.h> /* superset of previous */
 #include<string.h>
-
+#include"http.h"
 #define max_length  1000
 //connect() is used by client?
-
-typedef struct request{
-    char method[10];
-    char httprequest[10];
-};
-
-void convert(char *clientrequest,char *httprequest,char *method){
-    int it = 0,count = 0,i=0;
-    char temp[max_length];
-    while(clientrequest[it]!='\0'){
-        if(clientrequest[it]==' '){
-            count++;
-            if(count==1){
-                temp[i] = '\0';
-                memcpy(method,temp,i+1);
-                i = 0;
-                it++;
-            }
-            if(count==2){
-                httprequest[i] = '\0';
-                memcpy(httprequest,temp,i+1);
-                break;
-            }
-        }
-        temp[i++] = clientrequest[it++];
-    }
-}
 
 int main(){
     int sockfd,sock,request,clientfd,rec_len,backlog = 10;
@@ -60,9 +33,13 @@ int main(){
     while(1){
         
         char buff[max_length];
-        char httprequest[max_length];
+        char path[50];
         char rest[10];
-        
+        char response_buffer[400];
+        char method[10];
+
+        response *clientresp = malloc(sizeof(response));
+        printf("listening...\n");
         request = listen(sockfd,backlog);//or poll?
         if(request<0){
             perror("listen");
@@ -74,16 +51,22 @@ int main(){
         if(clientfd<0){
             perror("accept");
         }
-        rec_len = recv(clientfd,(void*)buff,max_length,0);
-        //printf("length of message : %d",rec_len);
+        printf("accepted client connection : %d\n",clientfd);
+
+        rec_len = recv(clientfd,(void*)buff,max_length-1,0);
+        buff[rec_len] = '\0';
+        printf("message : %s\n",buff);
         if(rec_len<0){
             perror("recv");
         }
+
         
-        buff[rec_len] = '\0';
-        convert(buff,httprequest,rest);
-        send(clientfd,httprequest,sizeof(httprequest),0);
-        puts(rest);
-        sleep(1);
+        convert(buff,path,method);
+        generateBody(clientresp,path);
+        makeResponseString(clientresp,response_buffer);
+        printf("\nhttpreq : %s\n",path);
+        send(clientfd,response_buffer,sizeof(response_buffer),0);
+        close(clientfd);
+        
     }
 }
