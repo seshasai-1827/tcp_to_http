@@ -7,7 +7,8 @@
 #include <netinet/ip.h> /* superset of previous */
 #include<string.h>
 #include"http.h"
-#define max_length  1000
+#define max_length  100000
+#define max_limit 100000
 //connect() is used by client?
 
 int main(){
@@ -35,8 +36,10 @@ int main(){
         char buff[max_length];
         char path[50];
         char rest[10];
-        char response_buffer[400];
+        char headers[1024];
+        char response_buffer[max_limit];
         char method[10];
+        int header_size;
 
         response *clientresp = malloc(sizeof(response));
         printf("listening...\n");
@@ -63,11 +66,20 @@ int main(){
         
         convert(buff,path,method);
         generateBody(clientresp,path);
-        makeResponseString(clientresp,response_buffer);
+        makeResponseString(clientresp,headers,&header_size);
         printf("\nhttpreq : %s\n",path);
-        send(clientfd,response_buffer,sizeof(response_buffer),0);
-        if(clientresp->contenttype == "image/jpeg") free(&(clientresp->content));
+        //sendBytes(clientresp,path);
+        send(clientfd,headers,header_size,0);
+        printf("A\n");
+
+        send(clientfd,clientresp->content,clientresp->length,0);
+        printf("B\n");
+
+        free(clientresp->content);
+        printf("C\n");
+
         close(clientfd);
+        printf("D\n");
         
     }
 }

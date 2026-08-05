@@ -18,7 +18,7 @@ void convert(char *clientrequest,char *path,char *method){
             }
             if(count==2){
                 temp[i] = '\0';
-                strcpy(path,temp);
+                strcpy(path,.temp);
                 break;
             }
         }
@@ -28,42 +28,55 @@ void convert(char *clientrequest,char *path,char *method){
 
 void generateBody(response *clientresp,char* path){
     //define the various controllers here
-    clientresp->content = "page not found";
-    clientresp->contenttype = "text";
-    clientresp->code = 404;
-    clientresp->status = path?"OK":"NO";
-    clientresp->length = strlen(clientresp->content);
+
     if (strcmp(path, "/wow") == 0){
-        clientresp->contenttype = "text";
+        clientresp->contenttype = "text/plain";
         clientresp->code = 200;
-        clientresp->content = "wow";//can be a function
-        clientresp->length = strlen(clientresp->content);
+        sendText(clientresp,"wow");//can be a function
     }
-    if (strcmp(path, "/favicon.ico") == 0){
+    else if (strcmp(path, "/favicon.ico") == 0){
         clientresp->contenttype = "image/jpeg";
         clientresp->code = 200;
         sendBytes(clientresp,"./static/meme.jpeg");
-
     }
-           
+    else{
+        clientresp->code = 404;
+        clientresp->contenttype = "text/plain";
+        clientresp->status = "not found";
+        sendText(clientresp,"page not found");
+    }   
+}
+
+void sendText(response* clientresp,char* respString){
+    clientresp->status = "OK";
+    clientresp->length = strlen(respString);
+    int it = 0;
+    unsigned char* buff = malloc(clientresp->length);
+    while(it<clientresp->length){
+        buff[it] = respString[it];
+        it++;
+    }
+    clientresp->content = buff;
 }
 
 void sendBytes(response* clientresp,char* filePath){
     FILE* fptr = fopen(filePath,"rb");
     if(fptr==NULL){
-        clientresp->content = "file not found";
         clientresp->code = 404;
-        clientresp->length = strlen(clientresp->content);
+        clientresp->contenttype = "text/plain";
+        clientresp->status = "not found";
+        sendText(clientresp,"page not found");
     }
     else{
         clientresp->code = 200;
+        clientresp->status = "OK";
         long int len = 0,it = 0,ch;
         fseek(fptr,0,SEEK_END);
         len = ftell(fptr);//fetches size of file
         if(len<0){
             perror("file length error");
         }
-        char* content = malloc(len);
+        unsigned char* content = malloc(len);
         if(content==NULL){
             perror("unsuccessful malloc...");
         }
@@ -75,7 +88,7 @@ void sendBytes(response* clientresp,char* filePath){
     fclose(fptr);
 }
 
-void makeResponseString(response *clientresp,char *response_str){
+void makeResponseString(response *clientresp,char *response_str,int* header_size){
 // // HTTP/1.1 200 OK\r\n
 // // Date: Mon, 13 Jul 2026 22:15:30 GMT\r\n
 // // Server: Apache/2.4.41 (Ubuntu)\r\n
@@ -84,8 +97,8 @@ void makeResponseString(response *clientresp,char *response_str){
 // // \r\n
 // // {"status":"success","message":"Data found"}
 
-    snprintf(response_str,400,
+    *header_size = snprintf(response_str,1024,
         "HTTP/1.1 %d %s\r\n"
-        "Content-Type:%s\r\nContent-Length:%d\r\n\r\n%s"
-        ,clientresp->code,clientresp->status,clientresp->contenttype,clientresp->length,clientresp->content);    
+        "Content-Type:%s\r\nContent-Length:%d\r\n\r\n"
+        ,clientresp->code,clientresp->status,clientresp->contenttype,clientresp->length);    
 }
