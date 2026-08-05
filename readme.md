@@ -19,8 +19,8 @@ A simple HTTP server built from scratch using POSIX sockets and the TCP/IP stack
 - [x] Receive HTTP requests
 - [x] Parse HTTP headers
 - [x] Send valid HTTP responses
-- [ ] Sending Bytes
+- [x] Sending Bytes
 - [ ] Serve static HTML pages
-- [ ] Serve images
+- [x] Serve images
 - [ ] Stream MP4 video
 - [ ] Handle multiple concurrent clients
