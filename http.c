@@ -1,6 +1,8 @@
 #include "http.h"
 #include <string.h>
 #include <stdio.h>
+#include<stdlib.h>
+
 
 void convert(char *clientrequest,char *path,char *method){
     int it = 0,count = 0,i=0;
@@ -30,19 +32,48 @@ void generateBody(response *clientresp,char* path){
     clientresp->contenttype = "text";
     clientresp->code = 404;
     clientresp->status = path?"OK":"NO";
+    clientresp->length = strlen(clientresp->content);
     if (strcmp(path, "/wow") == 0){
         clientresp->contenttype = "text";
         clientresp->code = 200;
         clientresp->content = "wow";//can be a function
+        clientresp->length = strlen(clientresp->content);
     }
     if (strcmp(path, "/favicon.ico") == 0){
-        clientresp->contenttype = "jpeg";
+        clientresp->contenttype = "image/jpeg";
         clientresp->code = 200;
-        clientresp->content = "./static/meme.jpeg";
+        sendBytes(clientresp,"./static/meme.jpeg");
+
     }
-    clientresp->length = strlen(clientresp->content);       
+           
 }
 
+void sendBytes(response* clientresp,char* filePath){
+    FILE* fptr = fopen(filePath,"rb");
+    if(fptr==NULL){
+        clientresp->content = "file not found";
+        clientresp->code = 404;
+        clientresp->length = strlen(clientresp->content);
+    }
+    else{
+        clientresp->code = 200;
+        long int len = 0,it = 0,ch;
+        fseek(fptr,0,SEEK_END);
+        len = ftell(fptr);//fetches size of file
+        if(len<0){
+            perror("file length error");
+        }
+        char* content = malloc(len);
+        if(content==NULL){
+            perror("unsuccessful malloc...");
+        }
+        fseek(fptr,0,SEEK_SET);//back to begining
+        clientresp->length = fread(content,sizeof(char),len,fptr);
+        clientresp->content = content;
+        //free(content);
+    }
+    fclose(fptr);
+}
 
 void makeResponseString(response *clientresp,char *response_str){
 // // HTTP/1.1 200 OK\r\n

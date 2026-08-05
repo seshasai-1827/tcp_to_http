@@ -13,6 +13,7 @@ typedef struct response{
     char *content;
 }response;
 
+void sendBytes(response *,char *);
 void generateBody(response *, char *);
 void makeResponseString(response *, char *);
 void convert(char *,char *,char *);

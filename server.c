@@ -66,6 +66,7 @@ int main(){
         makeResponseString(clientresp,response_buffer);
         printf("\nhttpreq : %s\n",path);
         send(clientfd,response_buffer,sizeof(response_buffer),0);
+        if(clientresp->contenttype == "image/jpeg") free(&(clientresp->content));
         close(clientfd);
         
     }
